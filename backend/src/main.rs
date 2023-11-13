@@ -6,6 +6,8 @@ use std::net::SocketAddr;
 use yerpc::axum::handle_ws_rpc;
 use yerpc::{rpc, RpcClient, RpcSession};
 
+mod buffer;
+
 #[derive(Clone)]
 struct Api;
 
