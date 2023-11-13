@@ -3,7 +3,7 @@ use std::io::prelude::*;
 use std::path::Path;
 
 /// Abstraction that represents rows in document
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Row {
     pub row: String,
 }
@@ -23,7 +23,7 @@ impl Row {
 }
 
 /// Abstraction that represents document it self
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
     pub name: String,
     buf: Vec<Row>,
@@ -40,7 +40,41 @@ impl std::default::Default for Buffer {
     }
 }
 
-impl BufferBasicApi for Buffer {}
+impl BufferBasicApi for Buffer {
+    fn create_row(&mut self, row: usize) {
+        self.buf.insert(row, Row::default());
+    }
+
+    fn insert_to_row(&mut self, row: usize, idx: usize, substr: &str) {
+        self.buf[row].row.insert_str(idx, substr);
+    }
+
+    fn delete_row(&mut self, row: usize) {
+        self.buf.remove(row);
+    }
+
+    fn delete_in_row(&mut self, row: usize, range: std::ops::Range<usize>) {
+        self.buf[row].row.replace_range(range, "");
+    }
+
+    fn read_row(&self, row: usize) -> Row {
+        self.buf[row].clone()
+    }
+
+    fn read_buf(&self) -> Self {
+        // I think that's not optimal solve :D Todo!
+        (*self).clone()
+    }
+
+    fn read_as_string(&self) -> String {
+        // Move to Into<String>
+        let mut res = String::new();
+        for s in self.buf.clone() {
+            res.push_str(&format!("{}\n", s.row));
+        }
+        res
+    }
+}
 
 impl Buffer {
     pub fn new(path: &str) -> Result<Self, std::io::Error> {
@@ -63,19 +97,30 @@ pub trait DocumentOperations {
     fn write_to(&self) -> Result<(), std::io::Error>;
 }
 
-pub trait BufferBasicApi<T: std::convert::Into<String>> {
-    //create
+/// BufferBasicApi is a trait that defines main methods
+/// that in future will be used as foundation for
+/// BufferApi that defines methods that will be
+/// used in RPC Api
+pub trait BufferBasicApi {
+    /// Creates row, shifts other rows
     fn create_row(&mut self, row: usize);
-    fn insert_to_row(&mut self, idx: usize);
-    //delete
+    /// Inserts substr in row from idx position
+    fn insert_to_row(&mut self, row: usize, idx: usize, substr: &str);
+    /// Deletes row
     fn delete_row(&mut self, row: usize);
-    fn delete_in_row(&mut self, range: std::ops::Range<usize>);
-    // read
+    /// Deletes substring in row given range
+    fn delete_in_row(&mut self, row: usize, range: std::ops::Range<usize>);
+    /// returns Row structure in given row
     fn read_row(&self, row: usize) -> Row;
+    /// returns itself as Structure
     fn read_buf(&self) -> Self;
+    /// returns itself as String representation
+    fn read_as_string(&self) -> String;
 }
 
-pub trait BufferApi<T: std::convert::Into<String>>: BufferBasicApi<T> {
+/// BufferApi is a trait that defines main methods
+/// for working with buffer
+pub trait BufferApi: BufferBasicApi {
     //
     //
 }
@@ -112,14 +157,12 @@ impl DocumentOperations for Buffer {
 
 #[cfg(test)]
 mod buffer_test {
-    use std::{fs, io::Read};
 
-    use crate::buffer::DocumentOperations;
+    use crate::buffer::*;
+    use std::{fs, io::Read};
 
     #[test]
     fn read_file_to_buffer() {
-        use crate::buffer::{Buffer, Row};
-
         let content: Vec<Row> = vec![
             Row::new("Hello everyone!".to_string()),
             Row::new("How are you?".to_string()),
@@ -133,7 +176,6 @@ mod buffer_test {
 
     #[test]
     fn write_buffer_to_file() {
-        use crate::buffer::{Buffer, Row};
         use std::fs::{self, File};
         File::create("tests/write_buffer_to_file.txt").unwrap();
         let mut buf = Buffer::new("tests/read_file_to_buffer.txt").unwrap();
@@ -153,5 +195,32 @@ mod buffer_test {
         file_r.read_to_string(&mut content_r).unwrap();
 
         assert_eq!(content_w.trim(), content_r.trim());
+    }
+
+    #[test]
+    fn create_insert_row_test_1() {
+        let mut buf = Buffer::new("tests/BufferBasicApiTest.txt").unwrap();
+        let cmp_buf = Buffer::new("tests/BufferBasicApiCreateInsert.txt").unwrap();
+        buf.create_row(4);
+        buf.insert_to_row(4, 0, "My name is Cyril!");
+        assert_eq!(buf.read_as_string(), cmp_buf.read_as_string());
+    }
+
+    #[test]
+    fn delete_row_test_1() {
+        let mut buf = Buffer::new("tests/BufferBasicApiTest.txt").unwrap();
+        let cmp_buf = Buffer::new("tests/BufferBasicApiDeleteRowTest.txt").unwrap();
+
+        buf.delete_row(2);
+        assert_eq!(buf.read_as_string(), cmp_buf.read_as_string());
+    }
+
+    #[test]
+    fn delete_in_row_test_1() {
+        let mut buf = Buffer::new("tests/BufferBasicApiTest.txt").unwrap();
+        let cmp_buf = Buffer::new("tests/BufferBasicApiDeleteInRowTest.txt").unwrap();
+
+        buf.delete_in_row(2, 5..15);
+        assert_eq!(buf.read_as_string(), cmp_buf.read_as_string())
     }
 }
