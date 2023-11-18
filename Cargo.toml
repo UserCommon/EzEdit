@@ -1,5 +1,5 @@
 [workspace]
-members = ["backend"]
+members = ["buffer", "server"]
 
 [workspace.package]
 name = "EzEdit"
