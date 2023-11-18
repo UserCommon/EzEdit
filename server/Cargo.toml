@@ -1,0 +1,13 @@
+[package]
+name = "server"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+serde = { version = "1.0.192", features = ["derive"] }
+serde_json = "1.0.108"
