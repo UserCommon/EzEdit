@@ -26,3 +26,7 @@ TODO:
 
 - [ ] Implement Rope B-Tree
 - [ ] Unicode support
+
+FIX:
+- [ ] Asyncronous method but working with buffer is sync
+- [ ] Is buffer a global state?
