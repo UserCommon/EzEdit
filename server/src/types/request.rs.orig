@@ -1,13 +1,21 @@
 use super::params::Params;
 use serde::{Deserialize, Serialize};
 
+<<<<<<< HEAD
 #[derive(Deserialize, Serialize, Debug)]
+=======
+#[derive(Deserialize, Serialize)]
+>>>>>>> origin/feat/sockets
 pub struct Request {
     pub method: String,
     pub params: Option<Params>,
 }
+<<<<<<< HEAD
 
 impl Request {
     pub fn new(method: String, params: Option<Params>) -> Self {
         Self { method, params }
     }
+}
+=======
+>>>>>>> origin/feat/sockets
