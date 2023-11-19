@@ -11,3 +11,4 @@ impl Request {
     pub fn new(method: String, params: Option<Params>) -> Self {
         Self { method, params }
     }
+}
